@@ -29,13 +29,11 @@ class DeribitWebsocket:
                 await websocket.send(msg)
                 while websocket.open:
                     response = await websocket.recv()
-                    # do something with the notifications...
                     self._on_message(response)
 
         asyncio.get_event_loop().run_until_complete(call_api(json.dumps(msg)))
 
     def _on_message(self, message):
-        print(message)
         if self.message_callback is not None:
             self.message_callback(message)
         else:
