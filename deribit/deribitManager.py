@@ -1,4 +1,6 @@
 import config
+import sys
+import traceback
 import logging
 import json
 from .deribitRest import DeribitRest
@@ -34,25 +36,38 @@ class DeribitManager:
         print("Message: " + str(message))
         message_json = json.loads(message)
         try:
-            data = message_json['params']['data']
-            channel = message_json['params']['channel']
-            [channel_type, instrument, interval] = channel.split('.')
-            if channel_type == "book":
-                if data['type'] == "snapshot":
-                    self.db.insert_json("OrderSnapshots", data)
-                elif data['type'] == "change":
-                    self.db.insert_order_update(data, instrument=instrument)
-            elif channel_type == 'trades':
-                self.db.insert_trade_update(data, instrument=instrument)
-
+            if 'params' in message_json:
+                data = message_json['params']['data']
+                channel = message_json['params']['channel']
+                [channel_type, instrument, interval] = channel.split('.')
+                if channel_type == "book":
+                    if data['type'] == "snapshot":
+                        self.db.insert_json("OrderSnapshots", data)
+                    elif data['type'] == "change":
+                        self.db.insert_order_update(data, instrument=instrument)
+                elif channel_type == 'trades':
+                    self.db.insert_trade_update(data)
+            else:
+                logging.info("Received irregular message: " + str(message))
         except Exception as e:
             logging.error("Error parsing message: " + str(message) + ", exception: " + str(e))
+            type_, value_, traceback_ = sys.exc_info()
+            logging.error('Type: ' + str(type_))
+            logging.error('Value: ' + str(value_))
+            logging.error('Traceback: ' + str(traceback.format_exc()))
         try:
-            data = message_json['params']['data']
-            channel = message_json['params']['channel']
-            if "book" in channel:
-                self.db.insert_json("Orders", data)
-            elif "trades" in channel:
-                self.db.insert_json("Trades", data)
+            if 'params' in message_json:
+                data = message_json['params']['data']
+                channel = message_json['params']['channel']
+                if "book" in channel:
+                    self.db.insert_json("Orders", data)
+                elif "trades" in channel:
+                    self.db.insert_json("Trades", data)
+            else:
+                logging.info("Received irregular message: " + str(message))
         except Exception as e:
             logging.error("Error storing raw message: " + str(e))
+            type_, value_, traceback_ = sys.exc_info()
+            logging.error('Type: ' + str(type_))
+            logging.error('Value: ' + str(value_))
+            logging.error('Traceback: ' + str(traceback.format_exc()))

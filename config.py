@@ -5,7 +5,7 @@ import os
 
 log_file = "dataManager.log"
 try:
-    os.remove(log_file)
+    open(log_file, 'w').close()
 except:
     pass
 for handler in logging.root.handlers[:]:

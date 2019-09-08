@@ -1,9 +1,13 @@
 import psycopg2
 import config
+import logging
+import sys
+import traceback
 
 
 def quote(msg):
-    return '"' + msg + '"'
+    return "'" + msg + "'"
+
 
 class DatabaseController:
 
@@ -39,7 +43,12 @@ class DatabaseController:
         try:
             cursor.execute(query)
             self.connection.commit()
-        except Exception:
+        except Exception as e:
+            logging.error("Error executing query: " + query)
+            type_, value_, traceback_ = sys.exc_info()
+            logging.error('Type: ' + str(type_))
+            logging.error('Value: ' + str(value_))
+            logging.error('Traceback: ' + str(traceback.format_exc()))
             self.connection.rollback()
         return cursor
 
@@ -47,31 +56,32 @@ class DatabaseController:
         data_str = str(json_data).replace("'", '"')
         query = "INSERT INTO " + table + "(Data) VALUES ('" + data_str + "');"
         self.execute(query)
-        print("executed query: " + query)
+        logging.info("executed query: " + query)
 
     def insert_order_update(self, data, instrument=None):
         if instrument is None:
             instrument = data['instrument_name']
-        instrument = quote(instrument)
         timestamp = data['timestamp']
         for bid in data['bids']:
             query = '''INSERT INTO OrderUpdates(Symbol, Type, Price, Amount, Side, Timestamp)
-            VALUES(%s, %s, %s, %s, %s, %s)''' % (instrument, bid[0], str(bid[1]), str(bid[2]), "buy", str(timestamp))
+            VALUES(%s, %s, %s, %s, %s, %s)''' % (quote(instrument), quote(bid[0]), quote(str(bid[1])),
+                                                 quote(str(bid[2])), quote("buy"), quote(str(timestamp)))
             self.execute(query)
-            print("executed query: " + query)
+            logging.info("executed query: " + query)
         for ask in data['asks']:
             query = '''INSERT INTO OrderUpdates(Symbol, Type, Price, Amount, Side, Timestamp)
-            VALUES(%s, %s, %s, %s, %s, %s)''' % (instrument, ask[0], str(ask[1]), str(ask[2]), "sell", str(timestamp))
+            VALUES(%s, %s, %s, %s, %s, %s)''' % (quote(instrument), quote(ask[0]), quote(str(ask[1])),
+                                                 quote(str(ask[2])), quote("sell"), quote(str(timestamp)))
             self.execute(query)
-            print("executed query: " + query)
+            logging.info("executed query: " + query)
 
     def insert_trade_update(self, data):
         for trade in data:
             query = '''INSERT INTO TradeUpdates(TradeId, Symbol, Price, Amount, Side, Timestamp)
             VALUES(%s, %s, %s, %s, %s, %s)''' \
-                    % (str(trade['trade_id']), quote(data['instrument_name']), str(data['price']),
-                       str(data['amount']), data['direction'], str(data['timestamp']))
-            print("executed query: " + query)
+                    % (quote(str(trade['trade_id'])), quote(trade['instrument_name']), quote(str(trade['price'])),
+                       quote(str(trade['amount'])), quote(trade['direction']), quote(str(trade['timestamp'])))
+            logging.info("executed query: " + query)
             self.execute(query)
 
     def setup_db(self):
