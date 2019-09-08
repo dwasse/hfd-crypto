@@ -2,7 +2,7 @@ This is a Python library for connecting with high frequency market data endpoint
 
 Data is stored both in raw message format for replay purposes and is also indexed by field for more efficient historical analysis.
 
-##Requirements
+## Requirements
 
 You will need to install `postgresql` and the pip package `psycopg2`.
 
