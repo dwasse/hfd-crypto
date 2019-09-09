@@ -18,3 +18,7 @@ sudo -u postgres psql
 > \q
 ```
 Run dataManager.py to start the data processing. Set configurations in `config.py`.
+
+## To do
+
+-BitMEX, Bitfinex, Kraken, and other derivative exchange support
