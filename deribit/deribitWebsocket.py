@@ -3,6 +3,7 @@ import websockets
 import json
 import ast
 import logging
+import time
 
 
 class DeribitWebsocket:
@@ -11,31 +12,42 @@ class DeribitWebsocket:
         self.channels = []
         self.message_callback = message_callback
         self.url = 'wss://www.deribit.com/ws/api/v2'
-
-    def connect(self, channels):
-        self.channels = []
-
-        msg = {
-            "jsonrpc": "2.0",
-            "method": "public/subscribe",
-            "id": 42,
-            "params": {
-                "channels": channels
-            }
-        }
-
-        async def call_api(msg):
-            async with websockets.connect(self.url) as websocket:
-                await websocket.send(msg)
-                while websocket.open:
-                    response = await websocket.recv()
-                    self._on_message(response)
-
-        asyncio.get_event_loop().run_until_complete(call_api(json.dumps(msg)))
+        self._shutdown = False
 
     def _on_message(self, message):
         if self.message_callback is not None:
             self.message_callback(message)
         else:
             logging.info("Received message: " + str(message))
+
+    def shutdown(self):
+        self._shutdown = True
+
+    def connect(self, channels=None):
+        if channels is not None:
+            self.channels = channels
+
+        msg = {
+            "jsonrpc": "2.0",
+            "method": "public/subscribe",
+            "id": 42,
+            "params": {
+                "channels": self.channels
+            }
+        }
+
+        async def call_api(msg):
+            async with websockets.connect(self.url) as websocket:
+                await websocket.send(msg)
+                while websocket.open and not self._shutdown:
+                    response = await websocket.recv()
+                    self._on_message(response)
+                if not self._shutdown:
+                    logging.info("Restarting deribit websocket connection at " + time.ctime())
+                    self.connect()
+                else:
+                    logging.info("Shut down deribit websocket at " + time.ctime())
+        asyncio.get_event_loop().run_until_complete(call_api(json.dumps(msg)))
+
+
 
