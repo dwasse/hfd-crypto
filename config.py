@@ -18,6 +18,6 @@ user = "user"
 password = "password"
 host = "127.0.0.1"
 port = "5432"
-database = "deribit"
+database = "hfd"
 
 channels=["book.BTC-PERPETUAL.100ms"]
