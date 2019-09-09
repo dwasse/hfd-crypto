@@ -12,10 +12,9 @@ On ubuntu:
 ```
 Then, you will need to create the hfd database:
 ```
-sudo -u postgres -i
-psql
+sudo -u postgres psql
 > CREATE DATABASE hfd;
-> CREATE USER "user" WITH ENCRYPTED PASSWORD "password";
+> CREATE USER "user" WITH ENCRYPTED PASSWORD 'password';
 > \q
 ```
 Run dataManager.py to start the data processing. Set configurations in `config.py`.
