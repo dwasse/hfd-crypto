@@ -30,7 +30,16 @@ class DeribitManager:
         channels = book_channels + trade_channels
         print("Channels: " + str(channels))
         logging.info("Connecting Deribit websocket to channels: " + str(channels) + "...")
-        self.websocket.connect(channels)
+        while not self.websocket.is_shutdown():
+            try:
+                logging.info("Opening Deribit websocket connection...")
+                self.websocket.connect(channels)
+            except Exception as e:
+                logging.error("Error connecting to Deribit websocket: " + str(e))
+                type_, value_, traceback_ = sys.exc_info()
+                logging.error('Type: ' + str(type_))
+                logging.error('Value: ' + str(value_))
+                logging.error('Traceback: ' + str(traceback.format_exc()))
 
     def _message_callback(self, message):
         print("Message: " + str(message))

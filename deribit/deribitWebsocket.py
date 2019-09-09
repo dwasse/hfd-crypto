@@ -23,10 +23,12 @@ class DeribitWebsocket:
     def shutdown(self):
         self._shutdown = True
 
+    def is_shutdown(self):
+        return self._shutdown
+
     def connect(self, channels=None):
         if channels is not None:
             self.channels = channels
-
         msg = {
             "jsonrpc": "2.0",
             "method": "public/subscribe",
@@ -42,12 +44,6 @@ class DeribitWebsocket:
                 while websocket.open and not self._shutdown:
                     response = await websocket.recv()
                     self._on_message(response)
-                if not self._shutdown:
-                    logging.info("Restarting deribit websocket connection at " + time.ctime())
-                    self.connect()
-                else:
-                    logging.info("Shut down deribit websocket at " + time.ctime())
+                logging.info("Deribit websocket closed at " + time.ctime())
         asyncio.get_event_loop().run_until_complete(call_api(json.dumps(msg)))
-
-
 
