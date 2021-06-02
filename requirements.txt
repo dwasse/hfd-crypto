@@ -4,5 +4,5 @@ idna==2.8
 pkg-resources==0.0.0
 psycopg2==2.8.3
 requests==2.22.0
-urllib3==1.25.3
+urllib3==1.26.5
 websockets==8.0.2
